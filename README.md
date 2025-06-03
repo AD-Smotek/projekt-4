@@ -133,7 +133,8 @@
 - Po hraní nebo kliknutí na „Zpět do menu“ se vrátíš zpět na hlavní menu.
 - Každá hra má své vlastní logiky a interaktivní prvky.
 
-- zdorje:https://www.youtube.com/
+- zdorje:
+-               https://www.youtube.com/
 -               https://www.tiktok.com/
 -               https://chatgpt.com/
 -               https://www.deepseek.com/
