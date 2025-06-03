@@ -1,6 +1,6 @@
-Samozřejmě! Níže najdeš detailní popis struktury a fungování tvého kódu, rozdělený do přehledných sekcí, aby ses v něm snadno orientoval a mohl si ho případně upravit nebo rozšířit.
 
----
+
+
 
 # Přehled kódu webové aplikace s více hrami
 
