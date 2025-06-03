@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <title>Herní menu</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f4f4f4;
+    }
+    .screen {
+      display: none;
+    }
+    .active {
+      display: block;
+    }
+    .menu button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .back-button {
+      margin-top: 20px;
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #pexeso-board {
+      display: grid;
+      grid-template-columns: repeat(6, 80px);
+      gap: 10px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+    #pexeso-board div {
+      width: 80px;
+      height: 80px;
+      background: #999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      cursor: pointer;
+      user-select: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: background 0.3s;
+    }
+    #pexeso-board div.matched {
+      background: #6c6;
+      cursor: default;
+      box-shadow: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="menu" class="screen active menu">
+    <h1>🎮 Vyber si hru</h1>
+    <button onclick="showGame('pexeso')">🃏 Pexeso</button>
+    <button onclick="showGame('ticTacToe')">⭕❌ Piškvorky</button>
+    <button onclick="showGame('clicker')">🖱️ Clicker</button>
+    <button onclick="showGame('guessNumber')">❓ Hádej číslo</button>
+    <button onclick="showGame('reactionTest')">⚡ Reakční test</button>
+  </div>
+
+  <!-- PEXESO -->
+  <div id="pexeso" class="screen">
+    <h2>🃏 Pexeso</h2>
+    <div id="pexeso-board"></div>
+    <button class="back-button" onclick="goBack()">Zpět do menu</button>
+  </div>
+
+  <!-- PIŠKVORKY -->
+  <div id="ticTacToe" class="screen">
+    <h2>⭕❌ Piškvorky</h2>
+    <div id="ttt-board" style="display: grid; grid-template-columns: repeat(3, 100px); gap: 5px; justify-content: center; margin: 20px auto;"></div>
+    <p id="ttt-status"></p>
+    <button onclick="resetTicTacToe()">Restart</button>
+    <button class="back-button" onclick="goBack()">Zpět do menu</button>
+  </div>
+
+  <!-- CLICKER -->
+  <div id="clicker" class="screen">
+    <h2>🖱️ Clicker</h2>
+    <p>Body: <span id="clicker-score">0</span></p>
+    <button onclick="clickerClick()">Klikni mě!</button>
+    <button class="back-button" onclick="goBack()">Zpět do menu</button>
+  </div>
+
+  <!-- HÁDEJ ČÍSLO -->
+  <div id="guessNumber" class="screen">
+    <h2>❓ Hádej číslo</h2>
+    <p>Hádej číslo mezi 1 a 100</p>
+    <input type="number" id="guessInput" />
+    <button onclick="checkGuess()">Hádej</button>
+    <p id="guessResult"></p>
+    <button onclick="resetGuess()">Nová hra</button>
+    <button class="back-button" onclick="goBack()">Zpět do menu</button>
+  </div>
+
+  <!-- REAKČNÍ TEST -->
+  <div id="reactionTest" class="screen">
+    <h2>⚡ Reakční test</h2>
+    <p id="reaction-message">Klikni na Start a čekej...</p>
+    <button id="reaction-button" onclick="startReactionTest()">Start</button>
+    <button class="back-button" onclick="goBack()">Zpět do menu</button>
+  </div>
+
+<script>
+  function goBack() {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('menu').classList.add('active');
+  }
+
+  function showGame(gameId) {
+    document.querySelectorAll('.screen').forEach(div => div.classList.remove('active'));
+    document.getElementById(gameId).classList.add('active');
+    if (gameId === 'pexeso') startPexeso();
+    if (gameId === 'ticTacToe') startTicTacToe();
+    if (gameId === 'clicker') initClicker();
+    if (gameId === 'guessNumber') resetGuess();
+    if (gameId === 'reactionTest') resetReactionTest();
+  }
+
+  // ====== PEXESO ======
+  let pexesoFirst = null;
+  let pexesoLock = false;
+  let matchedCount = 0;
+
+  const emojiCards = [
+    "🐶","🐱","🐭","🐹","🐰","🦊",
+    "🐻","🐼","🐨","🐯","🦁","🐮",
+    "🐷","🐸","🐵","🐔","🐧","🐦"
+  ]; // 18 párů emoji
+
+  function startPexeso() {
+    const board = document.getElementById("pexeso-board");
+    board.innerHTML = "";
+    pexesoFirst = null;
+    pexesoLock = false;
+    matchedCount = 0;
+
+    let cards = [...emojiCards, ...emojiCards];
+    cards.sort(() => Math.random() - 0.5);
+
+    cards.forEach(emoji => {
+      const card = document.createElement("div");
+      card.dataset.emoji = emoji;
+      card.textContent = "";
+      card.classList.remove("matched");
+
+      card.onclick = () => {
+        if (pexesoLock || card.classList.contains("matched") || card.textContent !== "") return;
+
+        card.textContent = emoji;
+
+        if (!pexesoFirst) {
+          pexesoFirst = card;
+        } else {
+          if (pexesoFirst.dataset.emoji === card.dataset.emoji && pexesoFirst !== card) {
+            // správná dvojice
+            card.classList.add("matched");
+            pexesoFirst.classList.add("matched");
+            pexesoFirst = null;
+            matchedCount += 2;
+            if (matchedCount === cards.length) {
+              setTimeout(() => alert("Gratulace! Vyhrál jsi pexeso!"), 300);
+            }
+          } else {
+            // špatná dvojice
+            pexesoLock = true;
+            let firstCard = pexesoFirst;
+            setTimeout(() => {
+              firstCard.textContent = "";
+              card.textContent = "";
+              pexesoLock = false;
+            }, 1000);
+            pexesoFirst = null;
+          }
+        }
+      };
+      board.appendChild(card);
+    });
+  }
+
+  // ====== PIŠKVORKY ======
+  function startTicTacToe() {
+    const board = document.getElementById("ttt-board");
+    board.innerHTML = "";
+    const status = document.getElementById("ttt-status");
+    let currentPlayer = "X";
+    let cells = Array(9).fill(null);
+
+    function checkWinner() {
+      const winPatterns = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+      ];
+      for (let [a,b,c] of winPatterns) {
+        if (cells[a] && cells[a] === cells[b] && cells[a] === cells[c]) return cells[a];
+      }
+      return cells.includes(null) ? null : "Remíza";
+    }
+
+    function render() {
+      board.innerHTML = "";
+      cells.forEach((val, i) => {
+        const cell = document.createElement("div");
+        cell.textContent = val || "";
+        cell.style.cssText = `
+          width:100px; height:100px; background:#ddd;
+          display:flex; align-items:center; justify-content:center;
+          font-size:36px; cursor:pointer;
+        `;
+        cell.onclick = () => {
+          if (!cells[i] && !checkWinner()) {
+            cells[i] = currentPlayer;
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            const result = checkWinner();
+            if (result) {
+              status.textContent = result === "Remíza" ? "Remíza!" : `Vyhrál hráč ${result}`;
+            }
+            render();
+          }
+        };
+        board.appendChild(cell);
+      });
+    }
+
+    window.resetTicTacToe = () => {
+      cells = Array(9).fill(null);
+      currentPlayer = "X";
+      status.textContent = "";
+      render();
+    };
+
+    render();
+  }
+
+  // ====== CLICKER ======
+  let clickerScore = 0;
+  function initClicker() {
+    clickerScore = 0;
+    document.getElementById("clicker-score").textContent = clickerScore;
+  }
+  function clickerClick() {
+    clickerScore++;
+    document.getElementById("clicker-score").textContent = clickerScore;
+  }
+
+  // ====== HÁDEJ ČÍSLO ======
+  let secretNumber = 0;
+  function resetGuess() {
+    secretNumber = Math.floor(Math.random() * 100) + 1;
+    document.getElementById("guessInput").value = "";
+    document.getElementById("guessResult").textContent = "";
+  }
+  function checkGuess() {
+    const guess = parseInt(document.getElementById("guessInput").value);
+    const result = document.getElementById("guessResult");
+    if (isNaN(guess)) {
+      result.textContent = "Zadej platné číslo!";
+    } else if (guess < secretNumber) {
+      result.textContent = "Příliš malé!";
+    } else if (guess > secretNumber) {
+      result.textContent = "Příliš velké!";
+    } else {
+      result.textContent = "Správně! 🎉";
+    }
+  }
+
+  // ====== REAKČNÍ TEST ======
+  let reactionStartTime = 0;
+  let reactionTimeout;
+
+  function resetReactionTest() {
+    const message = document.getElementById("reaction-message");
+    const button = document.getElementById("reaction-button");
+    clearTimeout(reactionTimeout);
+    reactionStartTime = 0;
+    message.textContent = "Klikni na Start a čekej...";
+    button.textContent = "Start";
+    button.onclick = startReactionTest;
+  }
+
+  function startReactionTest() {
+    const message = document.getElementById("reaction-message");
+    const button = document.getElementById("reaction-button");
+    message.textContent = "Čekej...";
+    button.disabled = true;
+    reactionTimeout = setTimeout(() => {
+      message.textContent = "Klikni teď!";
+      button.textContent = "Klikni!";
+      button.disabled = false;
+      reactionStartTime = Date.now();
+      button.onclick = measureReaction;
+    }, Math.random() * 2000 + 1000);
+  }
+
+  function measureReaction() {
+    const reactionTime = Date.now() - reactionStartTime;
+    const message = document.getElementById("reaction-message");
+    const button = document.getElementById("reaction-button");
+    message.textContent = `Tvoje reakce byla ${reactionTime} ms.`;
+    button.textContent = "Start";
+    button.onclick = startReactionTest;
+  }
+
+</script>
+
+</body>
+</html>
