@@ -133,6 +133,4 @@
 - Po hraní nebo kliknutí na „Zpět do menu“ se vrátíš zpět na hlavní menu.
 - Každá hra má své vlastní logiky a interaktivní prvky.
 
----
 
-Pokud bys chtěl, můžu ti také pomoci s vylepšením nebo rozšířením jednotlivých her. Stačí říct!
